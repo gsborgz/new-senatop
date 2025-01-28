@@ -66,6 +66,6 @@ for (let i = 0; i < rows; i++) {
   array.push(allTiles.slice(i * columns, i * columns + columns));
 }
 
-const matrix: [number[]] = array as [number[]];
+const overworldCollisionMatrix: [number[]] = array as [number[]];
 
-export default matrix;
+export default overworldCollisionMatrix;
