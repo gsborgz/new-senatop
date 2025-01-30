@@ -1,5 +1,5 @@
 import { AnchorComp, AreaComp, BodyComp, GameObj, KAPLAYCtx, LayerComp, PosComp, ScaleComp, SpriteComp, Vec2 } from "kaplay";
-import { DoorObj, SceneTag } from "./Scene";
+import { SceneTag } from "./SceneManager";
 
 type PlayerObj = {
   speed: number;
@@ -41,34 +41,46 @@ enum PlayerAnimation {
 }
 
 export class Player {
-  private properties!: PlayerObject;
+  private player!: PlayerObject;
 
   constructor(
     private readonly kaplay: KAPLAYCtx<{}, never>,
     private readonly scale: number,
-  ) { }
+  ) {
+    this.player = this.addPlayer();
+  }
+
+  public get position(): Vec2 {
+    return this.player.pos;
+  }
 
   public load() {
-    this.properties = this.addPlayer();
+    console.log('Player loaded');
 
-    this.properties.onUpdate(() => {
-      this.properties.movementDirection.x = 0;
-      this.properties.movementDirection.y = 0;
+    this.kaplay.add(this.player);
+
+    this.player.onUpdate(() => {
+      this.player.movementDirection.x = 0;
+      this.player.movementDirection.y = 0;
 
       this.setPlayerState();
       this.setPlayerAnimation();
       this.setPlayerMovement();
 
-      this.kaplay.setCamPos(this.properties.pos);
+      this.kaplay.setCamPos(this.player.pos);
     });
   }
 
+  public destroy(): void {
+    this.kaplay.destroy(this.player);
+  }
+
   public setPosition(position: Vec2): void {
-    this.properties.pos = this.kaplay.vec2(position);
+    this.player.pos = this.kaplay.vec2(position);
   }
 
   public onCollide(tag: string, callback: (obj: GameObj) => void): void {
-    this.properties.onCollide(tag, (obj) => {
+    this.player.onCollide(tag, (obj) => {
       callback(obj as GameObj);
     });
   }
@@ -93,7 +105,7 @@ export class Player {
       }
     });
 
-    return this.kaplay.add([
+    return this.kaplay.make([
       this.kaplay.sprite("player", { anim: 'downIdle' }),
       this.kaplay.pos(0, 0),
       this.kaplay.scale(this.scale),
@@ -120,42 +132,44 @@ export class Player {
     const movingUp = this.kaplay.isKeyDown('up');
     const isRunning = this.kaplay.isKeyDown('shift');
 
-    if (movingRight) {
-      this.properties.movementDirection.x = 1;
-      this.properties.movementDirection.y = 0;
-      this.properties.animationDirection = PlayerDirection.Right;
-    } else if (movingLeft) {
-      this.properties.movementDirection.x = -1;
-      this.properties.movementDirection.y = 0;
-      this.properties.animationDirection = PlayerDirection.Left;
-    } else if (movingDown) {
-      this.properties.movementDirection.y = 1;
-      this.properties.movementDirection.x = 0;
-      this.properties.animationDirection = PlayerDirection.Down;
-    } else if (movingUp) {
-      this.properties.movementDirection.y = -1;
-      this.properties.movementDirection.x = 0;
-      this.properties.animationDirection = PlayerDirection.Up;
+    if (this.kaplay.isKeyDown('e')) {
+      console.log(this.player.pos);
     }
 
-    if (this.kaplay.isKeyDown('e')) {
-      console.log(this.properties.pos);
+    if (movingRight) {
+      this.player.movementDirection.x = 1;
+      this.player.movementDirection.y = 0;
+      this.player.animationDirection = PlayerDirection.Right;
+    } else if (movingLeft) {
+      this.player.movementDirection.x = -1;
+      this.player.movementDirection.y = 0;
+      this.player.animationDirection = PlayerDirection.Left;
+    } else if (movingDown) {
+      this.player.movementDirection.y = 1;
+      this.player.movementDirection.x = 0;
+      this.player.animationDirection = PlayerDirection.Down;
+    } else if (movingUp) {
+      this.player.movementDirection.y = -1;
+      this.player.movementDirection.x = 0;
+      this.player.animationDirection = PlayerDirection.Up;
     }
 
     if (movingRight || movingLeft || movingDown || movingUp) {
       if (isRunning) {
-        this.properties.state = PlayerState.Running;
-        this.properties.speed = this.properties.runSpeed;
-        this.properties.animSpeed = 1;
+        this.player.state = PlayerState.Running;
+        this.player.speed = this.player.runSpeed;
+        this.player.animSpeed = 1;
       } else {
-        this.properties.state = PlayerState.Walking;
-        this.properties.speed = this.properties.walkSpeed;
-        this.properties.animSpeed = 0.6;
+        this.player.state = PlayerState.Walking;
+        this.player.speed = this.player.walkSpeed;
+        this.player.animSpeed = 0.6;
       }
+
+      this.player.trigger('move');
     } else {
-      this.properties.state = PlayerState.Idle;
-      this.properties.speed = 0;
-      this.properties.animSpeed = 0.1;
+      this.player.state = PlayerState.Idle;
+      this.player.speed = 0;
+      this.player.animSpeed = 0.1;
     }
   }
 
@@ -166,52 +180,53 @@ export class Player {
       [PlayerState.Running]: () => this.setPlayerRunningAnimation()
     }
 
-    playerAnimation[this.properties.state]();
+    playerAnimation[this.player.state]();
   }
 
   private setPlayerIdleAnimation(): void {
-    const currentAnim = this.properties.getCurAnim()?.name;
+    const currentAnim = this.player.getCurAnim()?.name;
 
-    if (this.properties.animationDirection === PlayerDirection.Right && currentAnim !== PlayerAnimation.RightIdle) {
-      this.properties.play(PlayerAnimation.RightIdle);
-    } else if (this.properties.animationDirection === PlayerDirection.Left && currentAnim !== PlayerAnimation.LeftIdle) {
-      this.properties.play(PlayerAnimation.LeftIdle);
-    } else if (this.properties.animationDirection === PlayerDirection.Down && currentAnim !== PlayerAnimation.DownIdle) {
-      this.properties.play(PlayerAnimation.DownIdle);
-    } else if (this.properties.animationDirection === PlayerDirection.Up && currentAnim !== PlayerAnimation.UpIdle) {
-      this.properties.play(PlayerAnimation.UpIdle);
+    if (this.player.animationDirection === PlayerDirection.Right && currentAnim !== PlayerAnimation.RightIdle) {
+      this.player.play(PlayerAnimation.RightIdle);
+    } else if (this.player.animationDirection === PlayerDirection.Left && currentAnim !== PlayerAnimation.LeftIdle) {
+      this.player.play(PlayerAnimation.LeftIdle);
+    } else if (this.player.animationDirection === PlayerDirection.Down && currentAnim !== PlayerAnimation.DownIdle) {
+      this.player.play(PlayerAnimation.DownIdle);
+    } else if (this.player.animationDirection === PlayerDirection.Up && currentAnim !== PlayerAnimation.UpIdle) {
+      this.player.play(PlayerAnimation.UpIdle);
     }
   }
 
   private setPlayerWalkingAnimation(): void {
-    const currentAnim = this.properties.getCurAnim()?.name;
+    const currentAnim = this.player.getCurAnim()?.name;
 
-    if (this.properties.animationDirection === PlayerDirection.Right && currentAnim !== PlayerAnimation.RightWalk) {
-      this.properties.play(PlayerAnimation.RightWalk);
-    } else if (this.properties.animationDirection === PlayerDirection.Left && currentAnim !== PlayerAnimation.LeftWalk) {
-      this.properties.play(PlayerAnimation.LeftWalk);
-    } else if (this.properties.animationDirection === PlayerDirection.Down && currentAnim !== PlayerAnimation.DownWalk) {
-      this.properties.play(PlayerAnimation.DownWalk);
-    } else if (this.properties.animationDirection === PlayerDirection.Up && currentAnim !== PlayerAnimation.UpWalk) {
-      this.properties.play(PlayerAnimation.UpWalk);
+    if (this.player.animationDirection === PlayerDirection.Right && currentAnim !== PlayerAnimation.RightWalk) {
+      this.player.play(PlayerAnimation.RightWalk);
+    } else if (this.player.animationDirection === PlayerDirection.Left && currentAnim !== PlayerAnimation.LeftWalk) {
+      this.player.play(PlayerAnimation.LeftWalk);
+    } else if (this.player.animationDirection === PlayerDirection.Down && currentAnim !== PlayerAnimation.DownWalk) {
+      this.player.play(PlayerAnimation.DownWalk);
+    } else if (this.player.animationDirection === PlayerDirection.Up && currentAnim !== PlayerAnimation.UpWalk) {
+      this.player.play(PlayerAnimation.UpWalk);
     }
   }
 
   private setPlayerRunningAnimation(): void {
-    const currentAnim = this.properties.getCurAnim()?.name;
+    const currentAnim = this.player.getCurAnim()?.name;
 
-    if (this.properties.animationDirection === PlayerDirection.Right && currentAnim !== PlayerAnimation.RightRun) {
-      this.properties.play(PlayerAnimation.RightRun);
-    } else if (this.properties.animationDirection === PlayerDirection.Left && currentAnim !== PlayerAnimation.LeftRun) {
-      this.properties.play(PlayerAnimation.LeftRun);
-    } else if (this.properties.animationDirection === PlayerDirection.Down && currentAnim !== PlayerAnimation.DownRun) {
-      this.properties.play(PlayerAnimation.DownRun);
-    } else if (this.properties.animationDirection === PlayerDirection.Up && currentAnim !== PlayerAnimation.UpRun) {
-      this.properties.play(PlayerAnimation.UpRun);
+    if (this.player.animationDirection === PlayerDirection.Right && currentAnim !== PlayerAnimation.RightRun) {
+      this.player.play(PlayerAnimation.RightRun);
+    } else if (this.player.animationDirection === PlayerDirection.Left && currentAnim !== PlayerAnimation.LeftRun) {
+      this.player.play(PlayerAnimation.LeftRun);
+    } else if (this.player.animationDirection === PlayerDirection.Down && currentAnim !== PlayerAnimation.DownRun) {
+      this.player.play(PlayerAnimation.DownRun);
+    } else if (this.player.animationDirection === PlayerDirection.Up && currentAnim !== PlayerAnimation.UpRun) {
+      this.player.play(PlayerAnimation.UpRun);
     }
   }
 
   private setPlayerMovement(): void {
-    this.properties.move(this.properties.movementDirection.scale(this.properties.speed));
+    this.player.move(this.player.movementDirection.scale(this.player.speed));
   }
+
 }
