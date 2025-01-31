@@ -1,11 +1,9 @@
 import Kaplay, { KAPLAYCtx } from 'kaplay';
 import { SceneManager } from './SceneManager';
-import { Player } from './Player';
 
 export class Game {
   private scale: number = 2.5;
   private kaplay: KAPLAYCtx<{}, never>;
-  private player!: Player;
   private sceneManager!: SceneManager;
 
   constructor() {
@@ -13,8 +11,7 @@ export class Game {
   }
 
   public start(): void {
-    this.player = new Player(this.kaplay, this.scale);
-    this.sceneManager = new SceneManager(this.kaplay, this.player, this.scale);
+    this.sceneManager = new SceneManager(this.kaplay, this.scale);
 
     this.sceneManager.init();
   }
