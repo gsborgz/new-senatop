@@ -2,8 +2,33 @@ import { AnchorComp, AreaComp, BodyComp, GameObj, KAPLAYCtx, LayerComp, PosComp,
 import overworldDoors from '../assets/maps/overworld/elements/doors';
 import blockADoors from '../assets/maps/block-a/elements/doors';
 import overworldBoundariesMatrix from '../assets/maps/overworld/elements/boundaries';
+import eastForestDoors from '../assets/maps/east-forest/elements/doors';
+import eastForestBoundariesMatrix from '../assets/maps/east-forest/elements/boundaries';
+import westForestDoors from '../assets/maps/west-forest/elements/doors';
+import westForestBoundariesMatrix from '../assets/maps/west-forest/elements/boundaries';
+import blockABoundariesMatrix from '../assets/maps/block-a/elements/boundaries';
+import blockACharactersMatrix from '../assets/maps/block-a/elements/characters';
+import overworldCharactersMatrix from '../assets/maps/overworld/elements/characters';
+import westForestCharactersMatrix from '../assets/maps/west-forest/elements/characters';
+import eastForestCharactersMatrix from '../assets/maps/east-forest/elements/characters';
+import blockBDoors from '../assets/maps/block-b/elements/doors';
+import blockBBoundariesMatrix from '../assets/maps/block-b/elements/boundaries';
+import blockBCharactersMatrix from '../assets/maps/block-b/elements/characters';
+import blockCDoors from '../assets/maps/block-c/elements/doors';
+import blockCBoundariesMatrix from '../assets/maps/block-c/elements/boundaries';
+import blockCCharactersMatrix from '../assets/maps/block-c/elements/characters';
 
 type Scenario = GameObj<SpriteComp | PosComp | ScaleComp | LayerComp>;
+
+export enum CharacterSpriteType {
+  TreinerLeft = 'treiner-left',
+  TreinerRight = 'treiner-right',
+  TreinerUp = 'treiner-up',
+  TreinerDown = 'treiner-down',
+  TreinerRandom = 'treiner-random',
+  Professor = 'professor',
+  Elite = 'elite',
+}
 
 export type DoorConfig = {
   matrix: SceneTag[][];
@@ -119,20 +144,42 @@ export class SceneManager {
   private createScenes(): void {
     this.createScene(SceneTag.Overworld, {
       doors: overworldDoors,
-      boundaries: overworldBoundariesMatrix
+      boundaries: overworldBoundariesMatrix,
+      characters: overworldCharactersMatrix
     });
 
     this.createScene(SceneTag.BlockA, {
-      doors: blockADoors
+      doors: blockADoors,
+      boundaries: blockABoundariesMatrix,
+      characters: blockACharactersMatrix
     });
 
-    this.createScene(SceneTag.BlockB, {});
-    this.createScene(SceneTag.BlockC, {});
-    this.createScene(SceneTag.WestForest, {});
-    this.createScene(SceneTag.EastForest, {});
+    this.createScene(SceneTag.BlockB, {
+      doors: blockBDoors,
+      boundaries: blockBBoundariesMatrix,
+      characters: blockBCharactersMatrix
+    });
+
+    this.createScene(SceneTag.BlockC, {
+      doors: blockCDoors,
+      boundaries: blockCBoundariesMatrix,
+      characters: blockCCharactersMatrix
+    });
+
+    this.createScene(SceneTag.WestForest, {
+      doors: westForestDoors,
+      boundaries: westForestBoundariesMatrix,
+      characters: westForestCharactersMatrix
+    });
+
+    this.createScene(SceneTag.EastForest, {
+      doors: eastForestDoors,
+      boundaries: eastForestBoundariesMatrix,
+      characters: eastForestCharactersMatrix
+    });
   }
 
-  private createScene(tag: SceneTag, config: { doors?: DoorConfig, boundaries?: number[][] }): void {
+  private createScene(tag: SceneTag, config: { doors?: DoorConfig, boundaries?: number[][], characters?: CharacterSpriteType[][] }): void {
     this.kaplay.scene(tag, (options) => {
       this.kaplay.setBackground(this.kaplay.color(0, 0, 0).color);
 
